@@ -312,11 +312,8 @@ def valid_fn(val_loader, model, model1, model2, device):
         batch_size = ids.size(0)
         with torch.no_grad():
             tag = model(ids, mask)
-            tag1 = model1(ids, mask)
-            tag2 = model2(ids, mask)
-            final_tag = (tag+tag1+tag2)/3
         mem = torch.cuda.memory_reserved() / 1E9 if torch.cuda.is_available() else 0
-        valid_preds.append(final_tag.softmax(-1).to('cpu').numpy())
+        valid_preds.append(tag.softmax(-1).to('cpu').numpy())
         torch.cuda.empty_cache()
         gc.collect()
     valid_preds = np.concatenate(valid_preds)
@@ -333,20 +330,9 @@ checkpoint = torch.load('deberta-v3-large_epoch_5.pth')
 model.load_state_dict(checkpoint)
 model.to(device)
 
-model1 = EntityModel1(num_tag = 9)
-checkpoint = torch.load('deberta-v3-base_epoch_5.pth')
-model1.load_state_dict(checkpoint)
-model1.to(device)
-
-model2 = EntityModel2(num_tag = 9)
-checkpoint = torch.load(deberta-v3-small_epoch_4.pth')
-model2.load_state_dict(checkpoint)
-model2.to(device)
 valid_preds = valid_fn(
     valid_data_loader,
     model,
-    model1,
-    model2,
     device
 )
 valid_preds = valid_preds.argmax(-1)
